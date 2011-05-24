@@ -5660,9 +5660,12 @@ public class XWiki implements XWikiDocChangeNotificationInterface, EventListener
             String text;
 
             if (format == null) {
-                text = userobj.getStringValue("first_name") + " " + userobj.getStringValue("last_name");
+                text = userobj.getStringValue("fullname");
                 if (StringUtils.isBlank(text)) {
-                    text = userdoc.getDocumentReference().getName();
+                    text = userobj.getStringValue("first_name") + " " + userobj.getStringValue("last_name");
+                    if (StringUtils.isBlank(text)) {
+                        text = userdoc.getDocumentReference().getName();
+                    }
                 }
             } else {
                 VelocityContext vcontext = new VelocityContext();
