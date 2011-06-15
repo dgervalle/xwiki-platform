@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -150,10 +151,11 @@ public abstract class AbstractDocumentSkinExtensionPlugin extends AbstractSkinEx
             // Otherwise, we look them up in the database.
             Set<String> extensions = new HashSet<String>();
             String query =
-                ", BaseObject as obj, StringProperty as use where obj.className='" + getExtensionClassName() + "'"
-                + " and obj.name=doc.fullName and use.id.id=obj.id and use.id.name='use' and use.value='always'";
+                "select doc.fullName from XWikiDocument doc, BaseObject as obj, StringProperty as use where obj.className='" + getExtensionClassName() + "'"
+                    + " and obj.name=doc.fullName and use.id.id=obj.id and use.id.name='use' and use.value='always'";
             try {
-                for (String extension : context.getWiki().getStore().searchDocumentsNames(query, context)) {
+                List<String> extdocs = context.getWiki().getStore().search(query, 0, 0, context);
+                for (String extension : extdocs) {
                     try {
                         XWikiDocument doc = context.getWiki().getDocument(extension, context);
                         // Only add the extension as being "always used" if the page holding it has been saved with
