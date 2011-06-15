@@ -601,8 +601,14 @@ public class XWikiApplication extends DefaultXObjectDocument
 
         String where = createHqlFilter(type, values, recurse, includeAppDesc);
 
-        return where.equals("") ? Collections.<String> emptySet() : new HashSet<String>(context.getWiki().getStore()
-            .searchDocumentsNames(HQL_WHERE + " " + where, values, context));
+        if (where.equals("")) {
+            return Collections.<String> emptySet();
+        } else {
+            String sql = "select distinct doc.fullName from XWikiDocument as doc " + HQL_WHERE + " " + where;
+            List<String> result = context.getWiki().getStore().search(sql, 0, 0, values, context);
+
+            return new HashSet<String>(result);
+        }
     }
 
     /**
@@ -633,9 +639,9 @@ public class XWikiApplication extends DefaultXObjectDocument
             if (where.equals("")) {
                 set = Collections.emptySet();
             } else {
-                set =
-                    new HashSet<String>(app.context.getWiki().getStore().searchDocumentsNames(HQL_WHERE + " " + where,
-                        values, app.context));
+                String sql = "select distinct doc.fullName from XWikiDocument as doc " + HQL_WHERE + " " + where;
+                List<String> result = app.context.getWiki().getStore().search(sql, 0, 0, values, app.context);
+                set = new HashSet<String>(result);
             }
         }
 
