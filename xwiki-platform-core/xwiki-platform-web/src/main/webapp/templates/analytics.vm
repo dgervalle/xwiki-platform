@@ -1,10 +1,26 @@
 ## place holder for an statistics script
 ## example for google analytics
-#*
+#set($analyticsDoc = $xwiki.getDocument('XWiki.GoogleAnalyticsConfig'))
+#set($analyticsObj = $analyticsDoc.getObject('XWiki.GoogleAnalyticsConfig'))
+#set($accounts = [])
+#if("$!analyticsObj" != "" && "$!analyticsObj.account" != "")
+  #foreach($aObj in $analyticsObj.account.split(' '))
+    #if("$!aObj" != "")
+      #set($discard = $accounts.add($aObj))##
+    #end 
+  #end
+#end
+#if($accounts.size() > 0)
 <script type="text/javascript">
   var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-XXXXX-X']);
-  _gaq.push(['_trackPageview']);
+  #foreach($account in $accounts)
+    #set($analyticsPrefix = '')
+    #if($velocityCount > 1)
+      #set($analyticsPrefix = 't' + $velocityCount + '.')
+    #end
+    _gaq.push(['${analyticsPrefix}_setAccount', '$account']);
+    _gaq.push(['${analyticsPrefix}_trackPageview']);
+  #end 
 
   (function() {
     var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
@@ -12,4 +28,4 @@
     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
   })();
 </script>
-*#
+#end
