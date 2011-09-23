@@ -24,7 +24,6 @@ package com.xpn.xwiki.store;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.xwiki.bridge.event.DocumentCreatedEvent;
@@ -179,7 +178,7 @@ public class XWikiCacheStore implements XWikiCacheStoreInterface, EventListener
 
     public void saveXWikiDoc(XWikiDocument doc, XWikiContext context, boolean bTransaction) throws XWikiException
     {
-        String key = getKey(doc, context);
+        String key = doc.getKey(context);
         this.store.saveXWikiDoc(doc, context, bTransaction);
         doc.setStore(this.store);
         // Make sure cache is initialized
@@ -192,7 +191,7 @@ public class XWikiCacheStore implements XWikiCacheStoreInterface, EventListener
 
         /*
          * We do not want to save the document in the cache at this time. If we did, this would introduce the
-         * possibility for cache incoherince if the document is not saved in the database properly. In addition, the
+         * possibility for cache incoherence if the document is not saved in the database properly. In addition, the
          * attachments uploaded to the document stay with it so we want the document in it's current form to be garbage
          * collected as soon as the request is complete.
          */
@@ -227,7 +226,7 @@ public class XWikiCacheStore implements XWikiCacheStoreInterface, EventListener
                 XWikiDocument doc = (XWikiDocument) source;
                 XWikiContext context = (XWikiContext) data;
 
-                String key = getKey(doc, context);
+                String key = doc.getKey(context);
 
                 if (getCache() != null) {
                     getCache().remove(key);
@@ -239,35 +238,37 @@ public class XWikiCacheStore implements XWikiCacheStoreInterface, EventListener
         }
     }
 
+    @Deprecated
     public String getKey(XWikiDocument doc)
     {
-        return getKey(doc.getWikiName(), doc.getFullName(), doc.getLanguage());
+        return doc.getKey(null);
     }
 
+    @Deprecated
     public String getKey(XWikiDocument doc, XWikiContext context)
     {
-        return getKey(doc.getFullName(), doc.getLanguage(), context);
+        return doc.getKey(context);
     }
 
+    @Deprecated
     public String getKey(String fullName, String language, XWikiContext context)
     {
-        return getKey(context.getDatabase(), fullName, language);
+        XWikiDocument doc = new XWikiDocument(null, fullName);
+        doc.setLanguage(language);
+        return doc.getKey(context);
     }
 
-    public String getKey(String wiki, String fullName, String language)
+    @Deprecated
+    public String getKey(final String wiki, final String fullName, final String language)
     {
-        String key = (wiki == null ? "" : wiki) + ":" + fullName;
-
-        if (StringUtils.isEmpty(language)) {
-            return key;
-        } else {
-            return key + ":" + language;
-        }
+        XWikiDocument doc = new XWikiDocument(wiki, null, fullName);
+        doc.setLanguage(language);
+        return doc.getKey(null);
     }
 
     public XWikiDocument loadXWikiDoc(XWikiDocument doc, XWikiContext context) throws XWikiException
     {
-        String key = getKey(doc, context);
+        String key = doc.getKey(context);
         if (log.isDebugEnabled()) {
             log.debug("Cache: begin for doc " + key + " in cache");
         }
@@ -314,7 +315,7 @@ public class XWikiCacheStore implements XWikiCacheStoreInterface, EventListener
 
     public void deleteXWikiDoc(XWikiDocument doc, XWikiContext context) throws XWikiException
     {
-        String key = getKey(doc, context);
+        String key = doc.getKey(context);
 
         this.store.deleteXWikiDoc(doc, context);
 
@@ -750,7 +751,7 @@ public class XWikiCacheStore implements XWikiCacheStoreInterface, EventListener
 
     public boolean exists(XWikiDocument doc, XWikiContext context) throws XWikiException
     {
-        String key = getKey(doc, context);
+        String key = doc.getKey(context);
         initCache(context);
         try {
             Boolean result = getPageExistCache().get(key);
