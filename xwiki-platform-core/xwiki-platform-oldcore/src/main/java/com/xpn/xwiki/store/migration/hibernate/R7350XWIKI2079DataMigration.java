@@ -22,12 +22,15 @@ package com.xpn.xwiki.store.migration.hibernate;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import javax.inject.Named;
+
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
+import org.xwiki.component.annotation.Component;
 
-import com.xpn.xwiki.XWikiContext;
 import com.xpn.xwiki.XWikiException;
 import com.xpn.xwiki.store.XWikiHibernateBaseStore.HibernateCallback;
+import com.xpn.xwiki.store.migration.DataMigrationException;
 import com.xpn.xwiki.store.migration.XWikiDBVersion;
 
 /**
@@ -40,40 +43,28 @@ import com.xpn.xwiki.store.migration.XWikiDBVersion;
  * @since 1.3M2
  * @since 1.2.2
  */
-public class R7350XWIKI2079Migrator extends AbstractXWikiHibernateMigrator
+@Component
+@Named("R7345XWIKI2079")
+public class R7350XWIKI2079DataMigration extends AbstractHibernateDataMigration
 {
-    /**
-     * {@inheritDoc}
-     * 
-     * @see com.xpn.xwiki.store.migration.hibernate.AbstractXWikiHibernateMigrator#getName()
-     */
-    public String getName()
-    {
-        return "R7345XWIKI2079";
-    }
-
-    /**
-     * {@inheritDoc}
-     * 
-     * @see AbstractXWikiHibernateMigrator#getDescription()
-     */
+    @Override
     public String getDescription()
     {
         return "See http://jira.xwiki.org/jira/browse/XWIKI-2079";
     }
 
-    /** {@inheritDoc} */
+    @Override
     public XWikiDBVersion getVersion()
     {
         return new XWikiDBVersion(7350);
     }
 
-    /** {@inheritDoc} */
-    public void migrate(XWikiHibernateMigrationManager manager, final XWikiContext context)
-        throws XWikiException
+    @Override
+    public void hibernateMigrate() throws DataMigrationException, XWikiException
     {
-        manager.getStore(context).executeWrite(context, true, new HibernateCallback<Object>()
+        getStore().executeWrite(getXWikiContext(), true, new HibernateCallback<Object>()
         {
+            @Override
             public Object doInHibernate(Session session) throws HibernateException,
                 XWikiException
             {

@@ -143,6 +143,7 @@ public abstract class XWikiAction extends Action
                     }
                     return null;
                 } else {
+                    LOG.error("Uncaught exception during XWiki initialisation:", e);
                     throw e;
                 }
             }

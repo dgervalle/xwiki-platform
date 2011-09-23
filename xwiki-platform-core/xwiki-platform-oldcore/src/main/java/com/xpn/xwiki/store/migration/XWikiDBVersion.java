@@ -29,35 +29,43 @@ public class XWikiDBVersion implements Comparable
 {
     /** svn revision number. */
     private int version;
-    /** Default constructor. It is need for Hibernate. */ 
+
+    /** Default constructor. It is needed for Hibernate. */
     public XWikiDBVersion() { }
+
     /** @param version - data version */
     public XWikiDBVersion(int version)
     {
         this.version = version;
     }
+
     /** @return data version */
     public int getVersion()
     {
         return version;
     }
+
     /** @param version - data version */
     protected void setVersion(int version)
     {
         this.version = version;
     }
-    /** {@inheritDoc} */
+
+    @Override
     public int compareTo(Object arg0)
     {
+        if( arg0 == null ) return -1;
         XWikiDBVersion o = (XWikiDBVersion) arg0;
         return Integer.valueOf(getVersion()).compareTo(
             Integer.valueOf(o.getVersion()));
     }
-    /** {@inheritDoc} */
+
+    @Override
     public String toString()
     {
         return String.valueOf(version);
     }
+
     /** @return next version */
     public XWikiDBVersion increment()
     {

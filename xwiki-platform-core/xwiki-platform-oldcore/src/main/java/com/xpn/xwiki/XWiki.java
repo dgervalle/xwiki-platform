@@ -174,7 +174,6 @@ import com.xpn.xwiki.store.XWikiHibernateStore;
 import com.xpn.xwiki.store.XWikiRecycleBinStoreInterface;
 import com.xpn.xwiki.store.XWikiStoreInterface;
 import com.xpn.xwiki.store.XWikiVersioningStoreInterface;
-import com.xpn.xwiki.store.migration.AbstractXWikiMigrationManager;
 import com.xpn.xwiki.user.api.XWikiAuthService;
 import com.xpn.xwiki.user.api.XWikiGroupService;
 import com.xpn.xwiki.user.api.XWikiRightService;
@@ -759,7 +758,7 @@ public class XWiki implements XWikiDocChangeNotificationInterface, EventListener
         // Prepare the store
         setConfig(config);
 
-        XWikiStoreInterface basestore = Utils.getComponent(XWikiStoreInterface.class, Param("xwiki.store.main.hint"));
+        XWikiStoreInterface basestore = Utils.getComponent(XWikiStoreInterface.class, Param("xwiki.store.main.hint","hibernate"));
 
         // Check if we need to use the cache store..
         boolean nocache = "0".equals(Param("xwiki.store.cache", "1"));
@@ -774,39 +773,22 @@ public class XWiki implements XWikiDocChangeNotificationInterface, EventListener
             "com.xpn.xwiki.criteria.impl.XWikiCriteriaServiceImpl", context));
 
         setAttachmentStore(Utils
-            .getComponent(XWikiAttachmentStoreInterface.class, Param("xwiki.store.attachment.hint")));
+            .getComponent(XWikiAttachmentStoreInterface.class, Param("xwiki.store.attachment.hint","hibernate")));
 
         setVersioningStore(Utils
-            .getComponent(XWikiVersioningStoreInterface.class, Param("xwiki.store.versioning.hint")));
+            .getComponent(XWikiVersioningStoreInterface.class, Param("xwiki.store.versioning.hint","hibernate")));
 
         setAttachmentVersioningStore(Utils.getComponent(AttachmentVersioningStore.class,
-            hasAttachmentVersioning(context) ? Param("xwiki.store.attachment.versioning.hint") : "void"));
+            hasAttachmentVersioning(context) ? Param("xwiki.store.attachment.versioning.hint","hibernate") : "void"));
 
         if (hasRecycleBin(context)) {
             setRecycleBinStore(Utils.getComponent(XWikiRecycleBinStoreInterface.class,
-                Param("xwiki.store.recyclebin.hint")));
+                Param("xwiki.store.recyclebin.hint","hibernate")));
         }
 
         if (hasAttachmentRecycleBin(context)) {
             setAttachmentRecycleBinStore(Utils.getComponent(AttachmentRecycleBinStore.class,
-                Param("xwiki.store.attachment.recyclebin.hint")));
-        }
-
-        // Run migrations
-        if ("1".equals(Param("xwiki.store.migration", "0"))) {
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info("Running storage migrations");
-            }
-            AbstractXWikiMigrationManager manager =
-                (AbstractXWikiMigrationManager) createClassFromConfig("xwiki.store.migration.manager.class",
-                    "com.xpn.xwiki.store.migration.hibernate.XWikiHibernateMigrationManager", context);
-            manager.startMigrations(context);
-            if ("1".equals(Param("xwiki.store.migration.exitAfterEnd", "0"))) {
-                if (LOGGER.isErrorEnabled()) {
-                    LOGGER.error("Exiting because xwiki.store.migration.exitAfterEnd is set");
-                }
-                System.exit(0);
-            }
+                Param("xwiki.store.attachment.recyclebin.hint","hibernate")));
         }
 
         resetRenderingEngine(context);
@@ -945,10 +927,6 @@ public class XWiki implements XWikiDocChangeNotificationInterface, EventListener
             synchronized (wikiName) {
                 if (!wikiList.contains(wikiName)) {
                     wikiList.add(wikiName);
-                    XWikiHibernateStore store = getHibernateStore();
-                    if (store != null) {
-                        store.updateSchema(context, force);
-                    }
 
                     // Make sure these classes exists
                     if (initClasses) {

@@ -19,29 +19,49 @@
  */
 package com.xpn.xwiki.store.migration;
 
-import com.xpn.xwiki.XWikiContext;
+import org.xwiki.component.annotation.ComponentRole;
+
 import com.xpn.xwiki.XWikiException;
 
 /**
  * Interface for all migration managers.
- * @version $Id$ 
+ *
+ * @version $Id$
  */
-public interface XWikiMigrationManagerInterface
+@ComponentRole
+public interface DataMigrationManager
 {
     /**
-     * @return data version
-     * @param context - used everywhere
+     * @return current DB version or null for a new database
      * @xwikicfg xwiki.store.migration.version - override data version
      * @throws XWikiException if any error
      */
-    XWikiDBVersion getDBVersion(XWikiContext context) throws XWikiException;
-    
+    XWikiDBVersion getDBVersion() throws DataMigrationException;
+
     /**
-     * @param context - used everywhere
-     * @throws XWikiException if any error
-     * @xwikicfg xwiki.store.migration.forced  - force run selected migrations and ignore all others
+     * Check current database version and proceed to migrations
+     * Migration is processed only once, and
+     * @xwikicfg xwiki.store.migration  - 1 to enable migration, default to 0
+     * @xwikicfg xwiki.store.migration.databases - list of database to migrate, default to all
+     * @xwikicfg xwiki.store.migration.forced  - force run selected migrations
      * @xwikicfg xwiki.store.migration.ignored - ignore selected migrations
-     * @throws XWikiException if any error
+     * @xwikicfg xwiki.store.migration.exitAfterEnd  - 1 to exit at the end of migrations, default to 0
+     * @throws XWikiException when version is incompatible with current version
      */
-    void startMigrations(XWikiContext context) throws XWikiException;
+    void checkDatabase() throws MigrationRequiredException, DataMigrationException;
+
+    /**
+     * @return latest DB version
+     * @since 3.2RC1
+     */
+    XWikiDBVersion getLatestVersion();
+
+    /**
+     * Setup the schema of a new DB and set it to the latest version (not running migrations) This should be used on a
+     * newly created DB only
+     *
+     * @throws XWikiException if any error
+     * @since 3.2RC1
+     */
+    void initNewDB() throws DataMigrationException;
 }
