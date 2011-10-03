@@ -17,28 +17,29 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+
 package com.xpn.xwiki.store.migration.hibernate;
 
-import com.xpn.xwiki.XWikiContext;
-import com.xpn.xwiki.XWikiException;
+import javax.inject.Named;
+
+import org.xwiki.component.annotation.Component;
+
 import com.xpn.xwiki.store.migration.XWikiDBVersion;
 
 /**
- * Migration for XWIKI1933: Editing users fails. Note: This migrator should only be executed if the R4340XWIKI833 one
- * has already been executed during a previous migration (i.e. if the database is in version >= 4340). This is because
- * this current migrator is because the old migrator was only executed in the main wiki, and there was some code that
- * inserted wrong data after the migration.
+ * Migration for XWIKI1933: Editing users fails.
+ * 
+ * Note: This data migration should only be executed if the R4340XWIKI833 one has already been executed
+ * during a previous migration (i.e. if the database is in version >= 4340). This is because it
+ * fixes a bug that cause the previous data migration to have only been executed in the main wiki, and
+ * there was some code that inserted wrong data after the migration.
  * 
  * @version $Id$
  */
-public class R6405XWIKI1933Migrator extends R4340XWIKI883Migrator
+@Component
+@Named("R6405XWIKI1933")
+public class R6405XWIKI1933DataMigration extends R4340XWIKI883DataMigration
 {
-    @Override
-    public String getName()
-    {
-        return "R6405XWIKI1933";
-    }
-
     @Override
     public String getDescription()
     {
@@ -55,11 +56,5 @@ public class R6405XWIKI1933Migrator extends R4340XWIKI883Migrator
     public boolean shouldExecute(XWikiDBVersion startupVersion)
     {
         return (startupVersion.getVersion() >= 4340);
-    }
-
-    @Override
-    public void migrate(XWikiHibernateMigrationManager manager, final XWikiContext context) throws XWikiException
-    {
-        super.migrate(manager, context);
     }
 }

@@ -17,34 +17,18 @@
  * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
  * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
  */
+
 package com.xpn.xwiki.store.migration.hibernate;
 
-import com.xpn.xwiki.XWikiContext;
-import com.xpn.xwiki.XWikiException;
-import com.xpn.xwiki.store.migration.XWikiDBVersion;
-import com.xpn.xwiki.store.migration.XWikiMigrationManagerInterface;
-import com.xpn.xwiki.store.migration.XWikiMigratorInterface;
+import org.xwiki.component.annotation.ComponentRole;
+
+import com.xpn.xwiki.store.migration.DataMigration;
 
 /**
- * Template for migrators of hibernate store
- * 
- * @see XWikiMigratorInterface
+ * Hibernate data migrations role.
  * @version $Id$
  */
-public abstract class AbstractXWikiHibernateMigrator implements XWikiMigratorInterface
+@ComponentRole
+public interface HibernateDataMigration extends DataMigration
 {
-    @Override
-    public void migrate(XWikiMigrationManagerInterface manager, XWikiContext context) throws XWikiException
-    {
-        migrate((XWikiHibernateMigrationManager) manager, context);
-    }
-
-    @Override
-    public boolean shouldExecute(XWikiDBVersion startupVersion)
-    {
-        return true;
-    }
-
-    /** @see XWikiMigratorInterface#migrate(XWikiMigrationManagerInterface,XWikiContext) */
-    public abstract void migrate(XWikiHibernateMigrationManager manager, XWikiContext context) throws XWikiException;
 }
