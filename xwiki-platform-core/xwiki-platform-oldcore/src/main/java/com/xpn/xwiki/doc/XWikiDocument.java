@@ -542,6 +542,78 @@ public class XWikiDocument implements DocumentModelBridge
     }
 
     /**
+     * Get a unique String for this document space, name and language. This function is guaranteed to yield a unique
+     * String for every possible combination of space, name, and language. However, if language is null, it will be
+     * converted to an empty string ("") before computation.
+     * @return a unique name (in a wiki) (4:full4:name2:lg)
+     */
+    private String getLocalKey()
+    {
+        return getLocalKey(new StringBuilder(64));
+    }
+
+    /**
+     * @param sb a StringBuilder used to append the key
+     * @return the content of the StringBuilder followed by a unique name like 4:full4:name2:lg
+     * @see #getLocalKey()
+     */
+    private String getLocalKey(StringBuilder sb)
+    {
+        final String language = StringUtils.isEmpty(this.language) ? "" : this.language;
+        final String space = getDocumentReference().getLastSpaceReference().getName();
+        final String name = getDocumentReference().getName();
+        return sb.append(space.length()).append(':').append(space)
+            .append(name.length()).append(':').append(name)
+            .append(language.length()).append(':').append(language)
+            .toString();
+    }
+
+    /**
+     * Get a unique String for this document wiki, space, name, and language. This function is guaranteed to yield a
+     * unique String for every possible combination of wiki, space, name and language. However, if language is null,
+     * it will be converted to an empty string ("") before computation.
+     * @return a unique name (8:wikiname4:full4:name2:lg)
+     */
+    public String getKey()
+    {
+        final String wiki = getDocumentReference().getWikiReference().getName();
+        return  getLocalKey(new StringBuilder(64).append(wiki.length()).append(':').append(wiki));
+    }
+
+    /**
+     * Get a likely unique 64bit hash representing this document name and language. Use the MD5 hashing algorithm.
+     *
+     * @return 64bit hash
+     */
+    private long getHash()
+    {
+        MessageDigest md5 = null;
+        long hash = 0;
+
+        try {
+            md5 = MessageDigest.getInstance("MD5");
+            byte[] digest = md5.digest(getLocalKey().getBytes("UTF-8"));
+            for (int l = digest.length, i = Math.max(0, digest.length - 9); i < l; i++) {
+                hash = hash << 8 | ((long) digest[i] & 0xFF);
+            }
+        } catch (NoSuchAlgorithmException ex) {
+            LOGGER.error("Cannot retrieve MD5 provider for document id hash", ex);
+            throw new RuntimeException("MD5 hash is required for document id hash");
+        } catch (Exception ex) {
+            LOGGER.error("Document id computation failed during MD5 processing", ex);
+            throw new RuntimeException("MD5 hash is required for document id hash");
+        }
+
+        return hash;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return (int) getHash();
+    }
+
+    /**
      * @return the unique id used to represent the document, as a number. This id is technical and is equivalent to the
      *         Document Reference + the language of the Document. This technical id should only be used for the storage
      *         layer and all user APIs should instead use Document Reference and language as they are model-related
@@ -549,29 +621,16 @@ public class XWikiDocument implements DocumentModelBridge
      */
     public long getId()
     {
-        // TODO: The implemented below doesn't guarantee a unique id since it uses the hashCode() method which doesn't
-        // guarantee unicity. From the JDK's javadoc: "It is not required that if two objects are unequal according to
-        // the equals(java.lang.Object) method, then calling the hashCode method on each of the two objects must
-        // produce distinct integer results.". This needs to be fixed to produce a real unique id since otherwise we
-        // can have clashes in the database.
+        // TODO: Ensure uniqueness of the generated id
+        // The implementation doesn't guarantee a unique id since it uses a hashing method which never guarantee
+        // uniqueness. However, the hash algorithm is really unlikely to collide in a given wiki. This needs to be
+        // fixed to produce a real unique id since otherwise we can have clashes in the database.
 
         // Note: We don't use the wiki name in the document id's computation. The main historical reason is so
         // that all things saved in a given wiki's database are always stored relative to that wiki so that
         // changing that wiki's name is simpler.
-        // It is important to note that a document called "Main.WebHome:es" will have
-        // the same cache ID as the Spanish version of "Main.WebHome".
-        // This is a problem which must be fixed here and in XWikiCacheStore#getKey()
-        // simultaneously.
-        // See: http://jira.xwiki.org/jira/browse/XWIKI-6169
-        if ((this.language == null) || this.language.trim().equals("")) {
-            this.id = this.localEntityReferenceSerializer.serialize(getDocumentReference()).hashCode();
-        } else {
-            this.id =
-                (this.localEntityReferenceSerializer.serialize(getDocumentReference()) + ":" + this.language)
-                    .hashCode();
-        }
 
-        return this.id;
+        return (this.id = getHash());
     }
 
     /**
